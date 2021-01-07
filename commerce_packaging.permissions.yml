@@ -1,0 +1,3 @@
+administer commerce_shipment_package:
+  title: 'Administer shipment packages'
+  'restrict access': TRUE

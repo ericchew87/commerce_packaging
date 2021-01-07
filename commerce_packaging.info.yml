@@ -1,0 +1,7 @@
+name: Commerce Packaging
+type: module
+description: 'Provides packaging strategies for Drupal Commerce Shipping.'
+package: Commerce (contrib)
+core: 8.x
+dependencies:
+  - commerce_shipping:commerce_shipping

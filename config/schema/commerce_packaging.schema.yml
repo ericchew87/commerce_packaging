@@ -1,0 +1,3 @@
+commerce_shipping.commerce_shipment_package_type.*:
+  type: commerce_config_entity_bundle
+  label: 'Shipment package type'
