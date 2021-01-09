@@ -1,0 +1,121 @@
+<?php
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\entity\BundleFieldDefinition;
+
+/**
+ * Submit handler for commerce_packaging_form_commerce_shipping_method_form_alter.
+ */
+function commerce_packaging_shipping_method_form_submit(array $form, FormStateInterface $form_state) {
+  $values = $form_state->getValues();
+  // Save the data as part of the plugin configuration.
+  if (!empty($values['packagers']) && !empty($values['plugin'][0]['target_plugin_configuration'])) {
+    $values['plugin'][0]['target_plugin_configuration']['packagers'] = $values['packagers'];
+    $form_state->setValueForElement($form['plugin']['widget'][0]['target_plugin_configuration'], $values['plugin'][0]['target_plugin_configuration']);
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for 'commerce_shipment_type_form'.
+ */
+function commerce_packaging_form_commerce_shipment_type_form_alter(array &$form, FormStateInterface $form_state) {
+  /** @var \Drupal\commerce_shipping\Entity\ShipmentTypeInterface $shipment_type */
+  $shipment_type = $form_state->getFormObject()->getEntity();
+  $shipment_package_type_id = $shipment_type->getThirdPartySetting('commerce_packaging', 'shipment_package_type');
+  $shipment_package_type_storage = \Drupal::entityTypeManager()->getStorage('commerce_shipment_package_type');
+  $shipment_package_types = $shipment_package_type_storage->loadMultiple();
+  $shipment_package_types = array_map(function ($shipment_package_type) {
+    return $shipment_package_type->label();
+  }, $shipment_package_types);
+  $shipment_package_type_ids = array_keys($shipment_package_types);
+
+  $form['commerce_packaging'] = [
+    '#type' => 'container',
+    '#weight' => 4,
+    '#element_validate' => ['commerce_packaging_shipment_type_form_validate'],
+  ];
+  $form['commerce_packaging']['enable_packaging'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Enable packaging for this shipment type'),
+    '#default_value' => !empty($shipment_package_type_id),
+  ];
+  $form['commerce_packaging']['shipment_package_type'] = [
+    '#type' => 'select',
+    '#title' => t('Shipment package type'),
+    '#options' => $shipment_package_types,
+    '#default_value' => $shipment_package_type_id ?: reset($shipment_package_type_ids),
+    '#required' => TRUE,
+    '#states' => [
+      'visible' => [
+        ':input[name="commerce_packaging[enable_packaging]"]' => ['checked' => TRUE],
+      ],
+    ],
+  ];
+  $form['actions']['submit']['#submit'][] = 'commerce_packaging_shipment_type_form_submit';
+}
+
+/**
+ * Validation handler for commerce_packaging_form_commerce_shipment_type_form_alter().
+ */
+function commerce_packaging_shipment_type_form_validate(array $element, FormStateInterface $form_state) {
+  /** @var \Drupal\commerce_shipping\Entity\ShipmentTypeInterface $shipment_type */
+  $shipment_type = $form_state->getFormObject()->getEntity();
+  $previous_value = $shipment_type->getThirdPartySetting('commerce_packaging', 'shipment_package_type');
+  $values = $form_state->getValues();
+  /** @var \Drupal\commerce\ConfigurableFieldManagerInterface $configurable_field_manager */
+  $configurable_field_manager = \Drupal::service('commerce.configurable_field_manager');
+
+  // Don't allow shipping to be disabled if there's data in the field.
+  if ($previous_value && !$values['enable_packaging']) {
+    $field_definition = commerce_packaging_build_package_field_definition($shipment_type->id());
+    if ($configurable_field_manager->hasData($field_definition)) {
+      $form_state->setError($element['enable_packaging'], t('Packaging cannot be disabled until all shipments with package data are deleted.'));
+    }
+  }
+}
+
+/**
+ * Submission handler for commerce_packaging_form_commerce_shipment_type_form_alter().
+ */
+function commerce_packaging_shipment_type_form_submit(array $form, FormStateInterface $form_state) {
+  /** @var \Drupal\commerce_shipping\Entity\ShipmentTypeInterface $shipment_type */
+  $shipment_type = $form_state->getFormObject()->getEntity();
+  $previous_value = $shipment_type->getThirdPartySetting('commerce_packaging', 'shipment_package_type');
+  $values = $form_state->getValues();
+  /** @var \Drupal\commerce\ConfigurableFieldManagerInterface $configurable_field_manager */
+  $configurable_field_manager = \Drupal::service('commerce.configurable_field_manager');
+
+  $field_definition = commerce_packaging_build_package_field_definition($shipment_type->id());
+  if (!$previous_value && $values['enable_packaging']) {
+    $configurable_field_manager->createField($field_definition);
+  }
+  elseif ($previous_value && !$values['enable_packaging']) {
+    $configurable_field_manager->deleteField($field_definition);
+  }
+
+  $shipment_package_type_id = $values['enable_packaging'] ? $values['shipment_package_type'] : '';
+  $shipment_type->setThirdPartySetting('commerce_packaging', 'shipment_package_type', $shipment_package_type_id);
+  $shipment_type->save();
+}
+
+/**
+ * Builds the $shipment->packages field definition.
+ *
+ * @param string $shipment_type_id
+ *   The shipment type ID.
+ *
+ * @return \Drupal\entity\BundleFieldDefinition
+ *   The field definition.
+ */
+function commerce_packaging_build_package_field_definition($shipment_type_id) {
+  $field_definition = BundleFieldDefinition::create('entity_reference')
+    ->setTargetEntityTypeId('commerce_shipment')
+    ->setTargetBundle($shipment_type_id)
+    ->setName('packages')
+    ->setLabel('Packages')
+    ->setCardinality(BundleFieldDefinition::CARDINALITY_UNLIMITED)
+    ->setSetting('target_type', 'commerce_shipment_package')
+    ->setSetting('handler', 'default');
+
+  return $field_definition;
+}

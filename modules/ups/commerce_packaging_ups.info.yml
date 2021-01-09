@@ -1,0 +1,8 @@
+name: Commerce Packaging UPS
+type: module
+description: 'Adds packaging functionality to the UPS Shipping Method.'
+package: Commerce (contrib)
+core: 8.x
+dependencies:
+  - commerce_packaging:commerce_packaging
+  - commerce_ups:commerce_ups

@@ -1,0 +1,7 @@
+<?php
+
+use Drupal\commerce_packaging_ups\Plugin\Commerce\ShippingMethod\UPSPackaging;
+
+function commerce_packaging_ups_commerce_shipping_method_info_alter(array &$definitions) {
+  $definitions['ups']['class'] = UPSPackaging::class;
+}

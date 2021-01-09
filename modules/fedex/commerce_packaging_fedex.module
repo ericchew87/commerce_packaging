@@ -1,0 +1,7 @@
+<?php
+
+use Drupal\commerce_packaging_fedex\Plugin\Commerce\ShippingMethod\FedExPackaging;
+
+function commerce_packaging_fedex_commerce_shipping_method_info_alter(array &$definitions) {
+  $definitions['fedex']['class'] = FedExPackaging::class;
+}

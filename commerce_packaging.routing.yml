@@ -1,0 +1,30 @@
+commerce_packaging.shipment_packager:
+  path: '/admin/commerce/orders/{order}/shipments/{shipment}/packager'
+  defaults:
+    _form: '\Drupal\commerce_packaging\Form\ShipmentPackagerForm'
+    _title: 'Shipment Packager'
+  requirements:
+    _permission: 'administer commerce_shipment_type'
+  options:
+    _admin_route: TRUE
+    parameters:
+      order:
+        type: entity:commerce_order
+      shipment:
+        type: entity:commerce_shipment
+
+commerce_packaging.move_shipment_item:
+  path: '/shipment_packager/move/{order}/{shipment_id}/{shipment_item_id}/{package_from}/{package_to}'
+  defaults:
+    _controller: '\Drupal\commerce_packaging\Controller\ShipmentPackagerController::moveItem'
+    shipment_id: null
+    shipment_item_id: null
+    package_from: null
+    package_to: null
+  requirements:
+    _permission: 'administer commerce_shipment_type'
+  options:
+    _admin_route: TRUE
+    parameters:
+      order:
+        type: entity:commerce_order

@@ -94,8 +94,7 @@ abstract class ShipmentPackagerBase extends PluginBase implements ContainerFacto
     $shipment_type_storage = $this->entityTypeManager->getStorage('commerce_shipment_type');
     /** @var \Drupal\commerce_shipping\Entity\ShipmentTypeInterface $shipment_type */
     $shipment_type = $shipment_type_storage->load($shipment->bundle());
-    // @TODO get shipment package type id from shipment type.
-    return $shipment_type->getShipmentPackageTypeId();
+    return $shipment_type->getThirdPartySetting('commerce_packaging', 'shipment_package_type');
   }
 
 }

@@ -1,0 +1,8 @@
+name: Commerce Packaging FedEx
+type: module
+description: 'Adds packaging functionality to the FedEx Shipping Method.'
+package: Commerce (contrib)
+core: 8.x
+dependencies:
+  - commerce_packaging:commerce_packaging
+  - commerce_fedex:commerce_fedex
