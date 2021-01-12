@@ -3,7 +3,7 @@
 namespace Drupal\commerce_packaging\Controller;
 
 use Drupal\commerce_order\Entity\OrderInterface;
-use Drupal\commerce_packaging\Form\ShipmentPackagerForm;
+use Drupal\commerce_packaging\Form\ShipmentPackagesForm;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\ReplaceCommand;
@@ -15,11 +15,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Defines the ShipmentPackagerController.
+ * Defines the ShipmentPackagesController.
  *
  * @internal
  */
-class ShipmentPackagerController implements ContainerInjectionInterface {
+class ShipmentPackagesController implements ContainerInjectionInterface {
 
   /**
    * The shared tempstore factory.
@@ -71,7 +71,7 @@ class ShipmentPackagerController implements ContainerInjectionInterface {
    * Updates packages and saves to TempStore when a ShipmentItem is moved on ShipmentBuilderForm.
    * This method is called via AJAX when a ShipmentItem is moved.
    *
-   * @param \Drupal\commerce_order\Entity\OrderInterface $order
+   * @param \Drupal\commerce_order\Entity\OrderInterface $commerce_order
    * The order.
    * @param $shipment_id
    * The id of the shipment entity.
@@ -82,10 +82,10 @@ class ShipmentPackagerController implements ContainerInjectionInterface {
    * @param $package_to
    * The ID of the package the shipment item was moved to, or 'shipment-item-area' if not a package.
    */
-  public function moveItem(OrderInterface $order, $shipment_id, $shipment_item_id, $package_from, $package_to) {
+  public function moveItem(OrderInterface $commerce_order, $shipment_id, $shipment_item_id, $package_from, $package_to) {
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
     if ($shipment = $this->entityTypeManager->getStorage('commerce_shipment')->load($shipment_id)) {
-      $collection = 'commerce_shipping.order.'.$order->id().'.shipment.'.$shipment->id();
+      $collection = 'commerce_shipping.order.'.$commerce_order->id().'.shipment.'.$shipment->id();
       $temp_store = $this->tempStoreFactory->get($collection);
       /** @var \Drupal\commerce_packaging\Entity\ShipmentPackageInterface[] $packages */
       $packages = $temp_store->get('packages');
@@ -103,10 +103,10 @@ class ShipmentPackagerController implements ContainerInjectionInterface {
 
       $temp_store->set('packages', $packages);
 
-      /** @var \Drupal\commerce_packaging\Form\ShipmentPackagerForm $shipment_builder_instance */
-      $shipment_builder_instance = $this->classResolver->getInstanceFromDefinition(ShipmentPackagerForm::class);
+      /** @var \Drupal\commerce_packaging\Form\ShipmentPackagesForm $shipment_builder_instance */
+      $shipment_builder_instance = $this->classResolver->getInstanceFromDefinition(ShipmentPackagesForm::class);
       $response = new AjaxResponse();
-      $response->addCommand(new ReplaceCommand('#test', $shipment_builder_instance->buildShipmentPackager($shipment)));
+      $response->addCommand(new ReplaceCommand('#test', $shipment_builder_instance->buildShipmentPackages($shipment)));
       return $response;
     } else {
       throw new NotFoundHttpException();

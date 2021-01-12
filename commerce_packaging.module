@@ -1,18 +1,43 @@
 <?php
 
+use Drupal\commerce_packaging\Form\ShipmentForm;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Drupal\entity\BundleFieldDefinition;
 
 /**
- * Submit handler for commerce_packaging_form_commerce_shipping_method_form_alter.
+ * Implements hook_entity_type_alter().
  */
-function commerce_packaging_shipping_method_form_submit(array $form, FormStateInterface $form_state) {
-  $values = $form_state->getValues();
-  // Save the data as part of the plugin configuration.
-  if (!empty($values['packagers']) && !empty($values['plugin'][0]['target_plugin_configuration'])) {
-    $values['plugin'][0]['target_plugin_configuration']['packagers'] = $values['packagers'];
-    $form_state->setValueForElement($form['plugin']['widget'][0]['target_plugin_configuration'], $values['plugin'][0]['target_plugin_configuration']);
+function commerce_packaging_entity_type_alter(array &$entity_types) {
+  $entity_types['commerce_shipment']->setFormClass('default', ShipmentForm::class);
+  $entity_types['commerce_shipment']->setFormClass('add', ShipmentForm::class);
+  $entity_types['commerce_shipment']->setFormClass('edit', ShipmentForm::class);
+}
+
+/**
+ * Implements hook_entity_operation().
+ */
+function commerce_packaging_entity_operation(EntityInterface $entity) {
+  // Only show the "Packages" operation link for commerce_shipment entities.
+  if ($entity->getEntityTypeId() !== 'commerce_shipment') {
+    return;
   }
+  // Only show if the user can create shipments.
+  if (!$entity->access('create')) {
+    return;
+  }
+  $operations = [];
+  $operations['packages'] = [
+    'title' => t('Packages'),
+    'url' => Url::fromRoute('commerce_packaging.shipment_packages', [
+      'commerce_order' => $entity->getOrder()->id(),
+      'commerce_shipment' => $entity->id(),
+    ]),
+    'weight' => 60,
+  ];
+
+  return $operations;
 }
 
 /**

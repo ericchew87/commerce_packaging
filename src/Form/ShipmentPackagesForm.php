@@ -13,7 +13,7 @@ use Drupal\Core\Url;
 use Drupal\physical\Weight;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-class ShipmentPackagerForm extends FormBase {
+class ShipmentPackagesForm extends FormBase {
 
   /**
    * The entity type manager.
@@ -80,7 +80,7 @@ class ShipmentPackagerForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, OrderInterface $order = NULL, ShipmentInterface $shipment = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, OrderInterface $commerce_order = NULL, ShipmentInterface $commerce_shipment = NULL) {
 
     $package_types = $this->packageTypeManager->getDefinitions();
     $package_types = array_map(function ($package_type) {
@@ -112,7 +112,7 @@ class ShipmentPackagerForm extends FormBase {
       '#options' => $package_types,
     ];
 
-    $form += $this->buildShipmentPackager($shipment);
+    $form += $this->buildShipmentPackages($commerce_shipment);
 
     $form['actions']['#type'] = 'actions';
     $form['actions']['submit_recalculate'] = array(
@@ -140,23 +140,23 @@ class ShipmentPackagerForm extends FormBase {
     return $form;
   }
 
-  public function buildShipmentPackager(ShipmentInterface $shipment) {
+  public function buildShipmentPackages(ShipmentInterface $shipment) {
     $this->shipment = clone $shipment;
+    $shipment = $this->shipment;
 
     $temp_store = $this->getTempstore();
-    if (empty($temp_store->get('shipment'))) {
+    $temp_shipment = $temp_store->get('shipment');
+
+    if (empty($temp_shipment) || $shipment->getChangedTime() != $temp_shipment->getChangedTime()) {
       $temp_store->set('shipment', $shipment);
       $temp_store->set('packages', $shipment->get('packages')->referencedEntities());
     }
 
-    $output = [];
-    $temp_store = $this->getTempstore();
-    /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
-    $shipment = $temp_store->get('shipment');
-    $shipment_id = $shipment->id() ? $shipment->id() : 'new';
+    $build = [];
+    $shipment_id = $shipment->id() ?: 'new';
     $order_id = $shipment->getOrderId();
 
-    $output['shipment_packager'] = [
+    $build['shipment_packager'] = [
       '#type' => 'container',
       '#attributes' => [
         'id' => [
@@ -165,18 +165,18 @@ class ShipmentPackagerForm extends FormBase {
       ],
     ];
 
-    $output['shipment_packager']['shipment_items'] = [
+    $build['shipment_packager']['shipment_items'] = [
       '#type' => 'container',
       '#attributes' => [
         'class' => [
           'shipment-packager__area',
           'shipment-items'
         ],
-        'data-layout-update-url' => '/shipment_packager/move/'.$order_id.'/'.$shipment_id,
+        'data-layout-update-url' => '/shipment_packages/move/'.$order_id.'/'.$shipment_id,
       ],
     ];
 
-    $output['shipment_packager']['shipment_items']['title'] = [
+    $build['shipment_packager']['shipment_items']['title'] = [
       '#type' => 'html_tag',
       '#tag' => 'h3',
       '#value' => t('Un-Packaged Items'),
@@ -185,13 +185,13 @@ class ShipmentPackagerForm extends FormBase {
       ],
     ];
 
-    $output['shipment_packager']['packages'] = [
+    $build['shipment_packager']['packages'] = [
       '#type' => 'container',
       '#attributes' => [
         'class' => [
           'package-area',
         ],
-        'data-layout-update-url' => '/shipment_packager/move/'.$order_id.'/'.$shipment_id,
+        'data-layout-update-url' => '/shipment_packages/move/'.$order_id.'/'.$shipment_id,
       ],
     ];
 
@@ -211,21 +211,21 @@ class ShipmentPackagerForm extends FormBase {
     $packages = $temp_store->get('packages');
     foreach ($packages as $delta => $package) {
 
-      $output['shipment_packager']['packages'][$delta] = [
+      $build['shipment_packager']['packages'][$delta] = [
         '#type' => 'container',
         '#attributes' => [
           'class' => ['package'],
         ],
       ];
 
-      $output['shipment_packager']['packages'][$delta]['package_header'] = [
+      $build['shipment_packager']['packages'][$delta]['package_header'] = [
         '#type' => 'container',
         '#attributes' => [
           'class' => ['package-header'],
         ],
       ];
 
-      $output['shipment_packager']['packages'][$delta]['package_header']['title'] = [
+      $build['shipment_packager']['packages'][$delta]['package_header']['title'] = [
         '#type' => 'html_tag',
         '#tag' => 'h3',
         '#value' => $package->getTitle(),
@@ -234,7 +234,7 @@ class ShipmentPackagerForm extends FormBase {
         ],
       ];
 
-      $output['shipment_packager']['packages'][$delta]['package_header']['remove-' . $delta] = [
+      $build['shipment_packager']['packages'][$delta]['package_header']['remove-' . $delta] = [
         '#type' => 'submit',
         '#value' => t('Remove Package ' . $delta),
         '#package_delta' => $delta,
@@ -253,7 +253,7 @@ class ShipmentPackagerForm extends FormBase {
         ],
       ];
 
-      $output['shipment_packager']['packages'][$delta]['items'] = [
+      $build['shipment_packager']['packages'][$delta]['items'] = [
         '#type' => 'container',
         '#attributes' => [
           'data-package-id' => $delta,
@@ -266,7 +266,7 @@ class ShipmentPackagerForm extends FormBase {
         $quantity = (int)$item->getQuantity();
         $unpackaged_items[$id.'-'.$quantity]['quantity']--;
 
-        $output['shipment_packager']['packages'][$delta]['items'][] = [
+        $build['shipment_packager']['packages'][$delta]['items'][] = [
           '#type' => 'html_tag',
           '#tag' => 'p',
           '#value' => t($item->getTitle() . ' x' . $quantity),
@@ -282,7 +282,7 @@ class ShipmentPackagerForm extends FormBase {
       $id = $item->getOrderItemId();
       $quantity = (int)$item->getQuantity();
       if ($unpackaged_items[$id.'-'.$quantity]['quantity'] > 0) {
-        $output['shipment_packager']['shipment_items'][] = [
+        $build['shipment_packager']['shipment_items'][] = [
           '#type' => 'container',
           '#markup' => $item->getTitle() . ' x' . $quantity,
           '#attributes' => [
@@ -297,7 +297,7 @@ class ShipmentPackagerForm extends FormBase {
       }
     }
 
-    return $output;
+    return $build;
   }
 
   /**
@@ -326,7 +326,8 @@ class ShipmentPackagerForm extends FormBase {
         ]
       ]);
       $form_state->setRedirectUrl($url);
-    } else if (!empty($triggering_element['#recalculate_rate'])) {
+    }
+    else if (!empty($triggering_element['#recalculate_rate'])) {
       $rates = $shipment->getShippingMethod()->getPlugin()->calculateRates($shipment);
       foreach ($rates as $rate) {
         if ($rate->getService()->getId() == $shipment->getShippingService()) {
