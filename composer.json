@@ -1,0 +1,16 @@
+{
+    "name": "ericchew87/commerce_packaging",
+    "type": "drupal-module",
+    "description": "Provides packaging strategies for Drupal Commerce Shipping.",
+    "homepage": "http://github.com/ericchew87/commerce_packaging",
+    "license": "GPL-2.0+",
+    "require": {
+        "drupal/commerce_shipping": "^2.0@beta"
+    },
+    "minimum-stability": "dev",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.x-dev"
+        }
+    }
+}
