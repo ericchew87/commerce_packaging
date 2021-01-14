@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_packaging_ups\Plugin\Commerce\ShippingMethod;
 
+use Drupal\commerce\InlineFormManager;
 use Drupal\commerce_packaging\ShipmentPackagerManager;
 use Drupal\commerce_packaging\ShippingMethodPackagingTrait;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
@@ -34,11 +35,14 @@ class UPSPackaging extends UPS {
    *   The rate request service.
    * @param \Drupal\commerce_packaging\ShipmentPackagerManager $shipment_packager
    *   The shipment packager.
+   * @param \Drupal\commerce\InlineFormManager $inline_form_manager
+   *   The inline form manager.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, PackageTypeManagerInterface $package_type_manager, WorkflowManagerInterface $workflow_manager, UPSRateRequestInterface $ups_rate_request, ShipmentPackagerManager $shipment_packager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, PackageTypeManagerInterface $package_type_manager, WorkflowManagerInterface $workflow_manager, UPSRateRequestInterface $ups_rate_request, ShipmentPackagerManager $shipment_packager, InlineFormManager $inline_form_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $package_type_manager, $workflow_manager, $ups_rate_request);
 
     $this->shipmentPackager = $shipment_packager;
+    $this->inlineFormManager = $inline_form_manager;
   }
 
   /**
@@ -52,7 +56,8 @@ class UPSPackaging extends UPS {
       $container->get('plugin.manager.commerce_package_type'),
       $container->get('plugin.manager.workflow'),
       $container->get('commerce_ups.ups_rate_request'),
-      $container->get('plugin.manager.commerce_shipment_packager')
+      $container->get('plugin.manager.commerce_shipment_packager'),
+      $container->get('plugin.manager.commerce_inline_form')
     );
   }
 

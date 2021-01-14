@@ -72,7 +72,7 @@ function commerce_packaging_form_commerce_shipment_type_form_alter(array &$form,
     '#required' => TRUE,
     '#states' => [
       'visible' => [
-        ':input[name="commerce_packaging[enable_packaging]"]' => ['checked' => TRUE],
+        ':input[name="enable_packaging"]' => ['checked' => TRUE],
       ],
     ],
   ];
