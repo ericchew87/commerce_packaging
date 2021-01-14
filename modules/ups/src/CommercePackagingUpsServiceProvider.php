@@ -16,8 +16,8 @@ class CommercePackagingUpsServiceProvider extends ServiceProviderBase {
    */
   public function alter(ContainerBuilder $container) {
     if ($definition = $container->getDefinition('commerce_ups.ups_shipment')) {
-      $definition->setClass(UPSShipment::class)
-        ->addArgument(new Reference('plugin.manager.commerce_shipment_packager'));
+      $definition->setClass(UPSShipment::class);
+      $definition->addArgument(new Reference('commerce_packaging.chain_shipment_packager'));
     }
   }
 

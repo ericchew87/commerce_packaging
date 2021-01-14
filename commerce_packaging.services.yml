@@ -1,4 +1,7 @@
 services:
   plugin.manager.commerce_shipment_packager:
-    class: Drupal\commerce_packaging\ShipmentPackagerManager
+    class: Drupal\commerce_packaging\ShipmentPackagerPluginManager
     parent: default_plugin_manager
+  commerce_packaging.chain_shipment_packager:
+    class: Drupal\commerce_packaging\ChainShipmentPackager
+    arguments: ['@entity_type.manager', '@messenger', '@config.factory', '@plugin.manager.commerce_shipment_packager', '@plugin.manager.commerce_package_type']

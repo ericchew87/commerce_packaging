@@ -12,7 +12,7 @@ use Drupal\Core\Plugin\DefaultPluginManager;
  * @see \Drupal\commerce_packaging\Annotation\CommerceShipmentPackager
  * @see plugin_api
  */
-class ShipmentPackagerManager extends DefaultPluginManager {
+class ShipmentPackagerPluginManager extends DefaultPluginManager {
 
   /**
    * Constructs a new ShipmentPackagerManager object.

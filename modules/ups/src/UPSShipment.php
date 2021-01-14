@@ -2,7 +2,7 @@
 
 namespace Drupal\commerce_packaging_ups;
 
-use Drupal\commerce_packaging\ShipmentPackagerManager;
+use Drupal\commerce_packaging\ChainShipmentPackagerInterface;
 use Drupal\commerce_packaging\ShippingMethodPackagingTrait;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
 use Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterface;
@@ -25,17 +25,17 @@ class UPSShipment extends UPSShipmentBase {
   /**
    * The shipment packager.
    *
-   * @var \Drupal\commerce_packaging\ShipmentPackagerManager
+   * @var \Drupal\commerce_packaging\ChainShipmentPackagerInterface
    */
   protected $shipmentPackager;
 
   /**
    * UPSShipment constructor.
    *
-   * @param \Drupal\commerce_packaging\ShipmentPackagerManager $shipment_packager
+   * @param \Drupal\commerce_packaging\ChainShipmentPackagerInterface $shipment_packager
    *   The shipment packager.
    */
-  public function __construct(ShipmentPackagerManager $shipment_packager) {
+  public function __construct(ChainShipmentPackagerInterface $shipment_packager) {
     $this->shipmentPackager = $shipment_packager;
   }
 
@@ -43,7 +43,9 @@ class UPSShipment extends UPSShipmentBase {
    * {@inheritDoc}
    */
   public function getShipment(ShipmentInterface $shipment, ShippingMethodInterface $shipping_method) {
-    $shipment = $this->packageShipment($shipment, $shipping_method);
+    if ($this->shipmentPackager->hasCustomPackaging($shipping_method)) {
+      $shipment = $this->shipmentPackager->packageShipment($shipment, $shipping_method);
+    }
     return parent::getShipment($shipment, $shipping_method);
   }
 

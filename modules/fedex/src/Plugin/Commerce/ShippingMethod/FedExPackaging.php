@@ -5,11 +5,13 @@ namespace Drupal\commerce_packaging_fedex\Plugin\Commerce\ShippingMethod;
 use Drupal\commerce_fedex\FedExPluginManager;
 use Drupal\commerce_fedex\FedExRequestInterface;
 use Drupal\commerce_fedex\Plugin\Commerce\ShippingMethod\FedEx;
-use Drupal\commerce_packaging\ShipmentPackagerManager;
+use Drupal\commerce_packaging\ChainShipmentPackagerInterface;
+use Drupal\commerce_packaging\ShipmentPackagerPluginManager;
 use Drupal\commerce_packaging\ShippingMethodPackagingTrait;
 use Drupal\commerce_price\RounderInterface;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
 use Drupal\commerce_shipping\PackageTypeManagerInterface;
+use Drupal\commerce_shipping\ShippingRate;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\state_machine\WorkflowManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -19,6 +21,13 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class FedExPackaging extends FedEx {
 
   use ShippingMethodPackagingTrait;
+
+  /**
+   * The shipment packager.
+   *
+   * @var \Drupal\commerce_packaging\ChainShipmentPackagerInterface
+   */
+  protected $shipmentPackager;
 
   /**
    * Constructs a new FedExPackaging object.
@@ -43,10 +52,10 @@ class FedExPackaging extends FedEx {
    *   Commerce Fedex Logger Channel.
    * @param \Drupal\commerce_price\RounderInterface $rounder
    *   The price rounder.
-   * @param \Drupal\commerce_packaging\ShipmentPackagerManager $shipment_packager
+   * @param \Drupal\commerce_packaging\ChainShipmentPackagerInterface $shipment_packager
    *   The shipment packager.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, PackageTypeManagerInterface $package_type_manager, WorkflowManagerInterface $workflow_manager, FedExPluginManager $fedex_service_manager, EventDispatcherInterface $event_dispatcher, FedExRequestInterface $fedex_request, LoggerInterface $watchdog, RounderInterface $rounder, ShipmentPackagerManager $shipment_packager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, PackageTypeManagerInterface $package_type_manager, WorkflowManagerInterface $workflow_manager, FedExPluginManager $fedex_service_manager, EventDispatcherInterface $event_dispatcher, FedExRequestInterface $fedex_request, LoggerInterface $watchdog, RounderInterface $rounder, ChainShipmentPackagerInterface $shipment_packager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $package_type_manager, $workflow_manager, $fedex_service_manager, $event_dispatcher, $fedex_request, $watchdog, $rounder);
 
     $this->shipmentPackager = $shipment_packager;
@@ -67,7 +76,7 @@ class FedExPackaging extends FedEx {
       $container->get('commerce_fedex.fedex_request'),
       $container->get('logger.channel.commerce_fedex'),
       $container->get('commerce_price.rounder'),
-      $container->get('plugin.manager.commerce_shipment_packager')
+      $container->get('commerce_packaging.chain_shipment_packager')
     );
   }
 
@@ -76,7 +85,7 @@ class FedExPackaging extends FedEx {
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
-    $form = $this->buildPackagingConfigurationForm($form, $form_state, $this);
+    $form = $this->buildPackagingConfigurationForm($form, $form_state);
     $form['options']['packaging'] = [
       '#type' => 'value',
       '#value' => $this->configuration['options']['packaging'],
@@ -89,15 +98,27 @@ class FedExPackaging extends FedEx {
    * {@inheritdoc}
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
-    $this->submitPackagingConfigurationForm($form, $form_state, $this);
+    $this->submitPackagingConfigurationForm($form, $form_state);
     parent::submitConfigurationForm($form, $form_state);
   }
 
   /**
    * {@inheritdoc}
    */
+  public function selectRate(ShipmentInterface $shipment, ShippingRate $rate) {
+    parent::selectRate($shipment, $rate);
+    if ($this->shipmentPackager->hasCustomPackaging($this)) {
+      $this->shipmentPackager->packageShipment($shipment, $this);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function getRequestedPackageLineItems(ShipmentInterface $shipment) {
-    $shipment = $this->packageShipment($shipment, $this);
+    if ($this->shipmentPackager->hasCustomPackaging($this)) {
+      $shipment = $this->shipmentPackager->packageShipment($shipment, $this);
+    }
     return $this->getRequestedPackageLineItemsIndividual($shipment);
   }
 

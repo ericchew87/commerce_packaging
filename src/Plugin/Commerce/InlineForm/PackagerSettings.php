@@ -3,7 +3,7 @@
 namespace Drupal\commerce_packaging\Plugin\Commerce\InlineForm;
 
 use Drupal\commerce\Plugin\Commerce\InlineForm\InlineFormBase;
-use Drupal\commerce_packaging\ShipmentPackagerManager;
+use Drupal\commerce_packaging\ShipmentPackagerPluginManager;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -21,11 +21,11 @@ class PackagerSettings extends InlineFormBase {
   /**
    * The shipment packager manager.
    *
-   * @var \Drupal\commerce_packaging\ShipmentPackagerManager
+   * @var \Drupal\commerce_packaging\ShipmentPackagerPluginManager
    */
   protected $shipmentPackager;
 
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, ShipmentPackagerManager $shipment_packager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, ShipmentPackagerPluginManager $shipment_packager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->shipmentPackager = $shipment_packager;
   }

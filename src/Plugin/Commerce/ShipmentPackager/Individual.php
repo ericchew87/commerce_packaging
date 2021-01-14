@@ -19,11 +19,10 @@ class Individual extends ShipmentPackagerBase {
   /**
    * {@inheritdoc}
    */
-  public function packageItems(ShipmentInterface $shipment, ShippingMethodInterface $shipping_method) {
-    $shipment->setPackageType($shipping_method->getDefaultPackageType());
-    /** @var \Drupal\commerce_shipping\ShipmentItem[] $items */
-    $items = $shipment->getData('unpackaged_items', $shipment->getItems());
-    foreach ($items as $item) {
+  public function packageItems(ShipmentInterface $shipment) {
+    /** @var \Drupal\commerce_shipping\ShipmentItem[] $unpackaged_items */
+    $unpackaged_items = $shipment->getData('unpackaged_items');
+    foreach ($unpackaged_items as $item) {
       // @todo: ShipmentItem are immutable, need to delete current item and add new one with correct quantity.
       for ($i = 0; $i < $item->getQuantity(); $i++) {
         $item = $this->updateItemQuantity($item, 1);
@@ -33,7 +32,7 @@ class Individual extends ShipmentPackagerBase {
           'type' => $this->getShipmentPackageType($shipment),
           'items' => [$item],
           'title' => $shipment->getPackageType()->getLabel() . '-' . $i,
-          'package_type' => $shipping_method->getDefaultPackageType()->getId(),
+          'package_type' => $shipment->getPackageType()->getId(),
           'declared_value' => $item->getDeclaredValue()->divide($item->getQuantity()),
           'weight' => $item->getWeight()->divide($item->getQuantity()),
         ]);

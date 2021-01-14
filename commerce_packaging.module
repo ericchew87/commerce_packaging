@@ -16,6 +16,32 @@ function commerce_packaging_entity_type_alter(array &$entity_types) {
 }
 
 /**
+ * Implements hook_ENTITY_TYPE_delete().
+ */
+function commerce_packaging_commerce_shipment_delete(EntityInterface $entity) {
+  if ($entity->hasField('packages') && !$entity->get('packages')->isEmpty()) {
+    $packages = $entity->get('packages')->referencedEntities();
+    \Drupal::entityTypeManager()->getStorage('commerce_shipment_package')->delete($packages);
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update().
+ */
+function commerce_packaging_commerce_shipment_update(EntityInterface $entity) {
+  if ($entity->hasField('packages') && !$entity->get('packages')->isEmpty()) {
+    $packages = $entity->get('packages')->referencedEntities();
+    /** @var \Drupal\commerce_packaging\Entity\ShipmentPackageInterface $package */
+    foreach ($packages as $package) {
+      if (!$package->getShipmentId()) {
+        $package->shipment_id = $entity->id();
+        $package->save();
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_entity_operation().
  */
 function commerce_packaging_entity_operation(EntityInterface $entity) {
@@ -80,7 +106,8 @@ function commerce_packaging_form_commerce_shipment_type_form_alter(array &$form,
 }
 
 /**
- * Validation handler for commerce_packaging_form_commerce_shipment_type_form_alter().
+ * Validation handler for
+ * commerce_packaging_form_commerce_shipment_type_form_alter().
  */
 function commerce_packaging_shipment_type_form_validate(array $element, FormStateInterface $form_state) {
   /** @var \Drupal\commerce_shipping\Entity\ShipmentTypeInterface $shipment_type */
@@ -100,7 +127,8 @@ function commerce_packaging_shipment_type_form_validate(array $element, FormStat
 }
 
 /**
- * Submission handler for commerce_packaging_form_commerce_shipment_type_form_alter().
+ * Submission handler for
+ * commerce_packaging_form_commerce_shipment_type_form_alter().
  */
 function commerce_packaging_shipment_type_form_submit(array $form, FormStateInterface $form_state) {
   /** @var \Drupal\commerce_shipping\Entity\ShipmentTypeInterface $shipment_type */

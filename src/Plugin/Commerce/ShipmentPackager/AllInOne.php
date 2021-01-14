@@ -19,21 +19,20 @@ class AllInOne extends ShipmentPackagerBase {
   /**
    * {@inheritdoc}
    */
-  public function packageItems(ShipmentInterface $shipment, ShippingMethodInterface $shipping_method) {
-    $shipment->setPackageType($shipping_method->getDefaultPackageType());
-    /** @var \Drupal\commerce_shipping\ShipmentItem[] $items */
-    $items = $shipment->getData('unpackaged_items', [$shipment->getItems()]);
+  public function packageItems(ShipmentInterface $shipment) {
+    /** @var \Drupal\commerce_shipping\ShipmentItem[] $unpackaged_items */
+    $unpackaged_items = $shipment->getData('unpackaged_items');
     /** @var \Drupal\commerce_packaging\Entity\ShipmentPackageInterface $package */
     $package = $this->entityTypeManager->getStorage('commerce_shipment_package')->create([
       'type' => $this->getShipmentPackageType($shipment),
-      'items' => $items,
+      'items' => $unpackaged_items,
       'title' => $shipment->getPackageType()->getLabel(),
-      'package_type' => $shipping_method->getDefaultPackageType()->getId(),
+      'package_type' => $shipment->getPackageType()->getId(),
       'declared_value' => $shipment->getTotalDeclaredValue(),
       'weight' => $shipment->getWeight(),
     ]);
     $shipment->get('packages')->appendItem($package);
-    $this->updatePackagedItems($shipment, $items);
+    $this->updatePackagedItems($shipment, $unpackaged_items);
     $shipment->setData('unpackaged_items', []);
   }
 

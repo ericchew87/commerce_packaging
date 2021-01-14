@@ -13,9 +13,7 @@ interface ShipmentPackagerInterface {
    *
    * @param \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment
    *   The shipment.
-   * @param \Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterface $shipping_method
-   *   The shipping method.
    */
-  public function packageItems(ShipmentInterface $shipment, ShippingMethodInterface $shipping_method);
+  public function packageItems(ShipmentInterface $shipment);
 
 }

@@ -19,9 +19,9 @@ class Manual extends ShipmentPackagerBase {
   /**
    * {@inheritdoc}
    */
-  public function packageItems(ShipmentInterface $shipment, ShippingMethodInterface $shipping_method) {
+  public function packageItems(ShipmentInterface $shipment) {
     /** @var \Drupal\commerce_shipping\ShipmentItem[] $unpackaged_items */
-    $unpackaged_items = $shipment->getData('unpackaged_items', $shipment->getItems());
+    $unpackaged_items = $shipment->getData('unpackaged_items');
     foreach ($unpackaged_items as $key => $item) {
       /** @var \Drupal\commerce_order\Entity\OrderItemInterface $order_item */
       $order_item = $this->entityTypeManager->getStorage('commerce_order_item')->load($item->getOrderItemId());
