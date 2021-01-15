@@ -12,6 +12,7 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -83,34 +84,27 @@ class ShipmentPackagesController implements ContainerInjectionInterface {
    * The ID of the package the shipment item was moved to, or 'shipment-item-area' if not a package.
    */
   public function moveItem(OrderInterface $commerce_order, $shipment_id, $shipment_item_id, $package_from, $package_to) {
+    $collection = 'commerce_packaging.order.'.$commerce_order->id().'.shipment.'.$shipment_id;
+    $temp_store = $this->tempStoreFactory->get($collection);
+
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment */
-    if ($shipment = $this->entityTypeManager->getStorage('commerce_shipment')->load($shipment_id)) {
-      $collection = 'commerce_shipping.order.'.$commerce_order->id().'.shipment.'.$shipment->id();
-      $temp_store = $this->tempStoreFactory->get($collection);
-      /** @var \Drupal\commerce_packaging\Entity\ShipmentPackageInterface[] $packages */
-      $packages = $temp_store->get('packages');
-      $shipment_item = $this->getShipmentItem($shipment, $shipment_item_id);
+    $shipment = $temp_store->get('shipment');
+    /** @var \Drupal\commerce_packaging\Entity\ShipmentPackageInterface[] $packages */
+    $packages = $temp_store->get('packages');
+    $shipment_item = $this->getShipmentItem($shipment, $shipment_item_id);
 
-      // $package_to and $package_from will be set to 'shipment-item-area' if being moved from or to
-      // the Un-Packaged Items area.
-      if ($package_to !== 'shipment-item-area') {
-        $packages[(int)$package_to]->addItem($shipment_item);
-      }
-
-      if ($package_from !== 'shipment-item-area') {
-        $packages[(int)$package_from]->removeItem($shipment_item);
-      }
-
-      $temp_store->set('packages', $packages);
-
-      /** @var \Drupal\commerce_packaging\Form\ShipmentPackagesForm $shipment_builder_instance */
-      $shipment_builder_instance = $this->classResolver->getInstanceFromDefinition(ShipmentPackagesForm::class);
-      $response = new AjaxResponse();
-      $response->addCommand(new ReplaceCommand('#test', $shipment_builder_instance->buildShipmentPackages($shipment)));
-      return $response;
-    } else {
-      throw new NotFoundHttpException();
+    // $package_to and $package_from will be set to 'shipment-item-area' if being moved from or to
+    // the Un-Packaged Items area.
+    if ($package_to !== 'shipment-item-area') {
+      $packages[(int)$package_to]->addItem($shipment_item);
     }
+
+    if ($package_from !== 'shipment-item-area') {
+      $packages[(int)$package_from]->removeItem($shipment_item);
+    }
+    $temp_store->set('packages', $packages);
+
+    return new Response();
   }
 
   /**
