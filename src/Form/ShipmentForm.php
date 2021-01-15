@@ -8,6 +8,7 @@ use Drupal\commerce_packaging\ChainShipmentPackagerInterface;
 use Drupal\commerce_shipping\Form\ShipmentForm as ShipmentFormBase;
 use Drupal\commerce_shipping\PackageTypeManagerInterface;
 use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -72,7 +73,7 @@ class ShipmentForm extends ShipmentFormBase {
     $form['shipping_profile']['widget'][0]['#type'] = 'fieldset';
 
     // Fixes illegal choice has been detected message upon AJAX reload.
-    if (empty($form['shipping_method']['widget'][0]['#options'])) {
+    if (!empty($form['shipping_method']) && empty($form['shipping_method']['widget'][0]['#options'])) {
       $form['shipping_method']['#access'] = FALSE;
     }
 
@@ -104,6 +105,37 @@ class ShipmentForm extends ShipmentFormBase {
     ];
 
     return $form;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getFormDisplay(FormStateInterface $form_state) {
+    $form_display = parent::getFormDisplay($form_state);
+
+    // Determine if shipping method options are visible based on whether
+    // there is data in the user input.
+    $user_input = $form_state->getUserInput();
+    $shipping_methods_visible = !empty($user_input['shipping_method']);
+
+    $triggering_element = $form_state->getTriggeringElement();
+    $triggering_element_name = !empty($triggering_element) ? end($triggering_element['#parents']) : NULL;
+    // Do not show the shipping method options unless shipping is being recalculated
+    // or the page is refreshing and the shipping method options were visible
+    // before the page refreshed.  This prevents unnecessary api requests and
+    // packaging calculations.
+    if (!in_array($triggering_element_name, ['recalculate_shipping', 'select_address']) && !$shipping_methods_visible) {
+      $form_display->removeComponent('shipping_method');
+    }
+    // Rebuild the form display if shipping method options should be displayed
+    // and the component is not shown in the form display attached to the current
+    // form state.
+    elseif (!$form_display->getComponent('shipping_method')) {
+      $form_display = EntityFormDisplay::collectRenderDisplay($this->entity, $this->getOperation());
+      $this->setFormDisplay($form_display, $form_state);
+    }
+
+    return $form_display;
   }
 
   /**
