@@ -11,7 +11,7 @@ use Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterf
  * @CommerceShipmentPackager(
  *   id = "all_in_one",
  *   label = @Translation("All In One"),
- *   description = @Translation("Places all shipment items into the default package specified by the shipping method."),
+ *   description = @Translation("Places all shipment items into the default package."),
  * )
  */
 class AllInOne extends ShipmentPackagerBase {

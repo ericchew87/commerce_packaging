@@ -11,7 +11,7 @@ use Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterf
  * @CommerceShipmentPackager(
  *   id = "individual",
  *   label = @Translation("Individual"),
- *   description = @Translation("Places each shipment item into an individual package based on the default package specified by the shipping method."),
+ *   description = @Translation("Places each shipment item into its own default package."),
  * )
  */
 class Individual extends ShipmentPackagerBase {
