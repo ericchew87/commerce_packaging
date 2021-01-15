@@ -107,10 +107,7 @@ class ShipmentPackageListBuilder extends EntityListBuilder {
     /** @var \Drupal\commerce_packaging\Entity\ShipmentPackageInterface $entity */
     $amount = $entity->getDeclaredValue();
 
-    $row['label']['data'] = [
-        '#type' => 'link',
-        '#title' => $entity->label(),
-      ] + $entity->toUrl()->toRenderArray();
+    $row['label'] = $entity->getTitle();
     $row['tracking'] = $entity->getTrackingCode();
     $row['declared_value'] = $this->currencyFormatter->format($amount->getNumber(), $amount->getCurrencyCode());
 

@@ -6,12 +6,9 @@ use Drupal\commerce_fedex\FedExPluginManager;
 use Drupal\commerce_fedex\FedExRequestInterface;
 use Drupal\commerce_fedex\Plugin\Commerce\ShippingMethod\FedEx;
 use Drupal\commerce_packaging\ChainShipmentPackagerInterface;
-use Drupal\commerce_packaging\ShipmentPackagerPluginManager;
-use Drupal\commerce_packaging\ShippingMethodPackagingTrait;
 use Drupal\commerce_price\RounderInterface;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
 use Drupal\commerce_shipping\PackageTypeManagerInterface;
-use Drupal\commerce_shipping\ShippingRate;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\state_machine\WorkflowManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -19,8 +16,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class FedExPackaging extends FedEx {
-
-  use ShippingMethodPackagingTrait;
 
   /**
    * The shipment packager.
@@ -85,7 +80,6 @@ class FedExPackaging extends FedEx {
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
-    $form = $this->buildPackagingConfigurationForm($form, $form_state);
     $form['options']['packaging'] = [
       '#type' => 'value',
       '#value' => $this->configuration['options']['packaging'],
@@ -97,28 +91,7 @@ class FedExPackaging extends FedEx {
   /**
    * {@inheritdoc}
    */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
-    $this->submitPackagingConfigurationForm($form, $form_state);
-    parent::submitConfigurationForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function selectRate(ShipmentInterface $shipment, ShippingRate $rate) {
-    parent::selectRate($shipment, $rate);
-    if ($this->shipmentPackager->hasCustomPackaging($this)) {
-      $this->shipmentPackager->packageShipment($shipment, $this);
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   protected function getRequestedPackageLineItems(ShipmentInterface $shipment) {
-    if ($this->shipmentPackager->hasCustomPackaging($this)) {
-      $shipment = $this->shipmentPackager->packageShipment($shipment, $this);
-    }
     return $this->getRequestedPackageLineItemsIndividual($shipment);
   }
 

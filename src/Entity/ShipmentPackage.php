@@ -46,9 +46,9 @@ use Drupal\physical\Weight;
  *     "uuid" = "uuid",
  *   },
  *   links = {
- *     "canonical" = "/admin/commerce/orders/{commerce_order}/shipments/{commerce_shipment}/packages/{commerce_package}",
+ *     "canonical" = "/admin/commerce/orders/{commerce_order}/shipments/{commerce_shipment}/packages/{commerce_shipment_package}",
  *     "collection" = "/admin/commerce/orders/{commerce_order}/shipments/{commerce_shipment}/packages",
- *     "edit-form" = "/admin/commerce/orders/{commerce_order}/shipments/{commerce_shipment}/packages/{commerce_package}/edit",
+ *     "edit-form" = "/admin/commerce/orders/{commerce_order}/shipments/{commerce_shipment}/packages/{commerce_shipment_package}/edit",
  *   },
  *   bundle_entity_type = "commerce_shipment_package_type",
  *   field_ui_base_route = "entity.commerce_shipment_package_type.edit_form",
@@ -188,7 +188,7 @@ class ShipmentPackage extends ContentEntityBase implements ShipmentPackageInterf
    */
   public function getDeclaredValue() {
     if (!$this->get('declared_value')->isEmpty()) {
-      return $this->get('amount')->first()->toPrice();
+      return $this->get('declared_value')->first()->toPrice();
     }
   }
 
@@ -204,8 +204,7 @@ class ShipmentPackage extends ContentEntityBase implements ShipmentPackageInterf
    * {@inheritdoc}
    */
   protected function recalculateDeclaredValue() {
-    // @todo Dont hard code currency.
-    $total_declared_value = new Price('0.00', 'USD');
+    $total_declared_value = NULL;
     foreach ($this->getItems() as $item) {
       $declared_value = $item->getDeclaredValue();
       $total_declared_value = $total_declared_value ? $total_declared_value->add($declared_value) : $declared_value;

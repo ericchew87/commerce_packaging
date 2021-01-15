@@ -75,16 +75,10 @@ class ChainShipmentPackager implements ChainShipmentPackagerInterface {
   /**
    * {@inheritDoc}
    */
-  public function getEnabledPackagers(ShippingMethodInterface $shipping_method_plugin = NULL) {
+  public function getEnabledPackagers() {
     $packagers = [];
 
-    // Get the global packager settings.
     $configuration = $this->config->get('packagers');
-    // If a shipping method was provided, check if it has custom packaging settings.
-    if ($shipping_method_plugin && $this->hasCustomPackaging($shipping_method_plugin)) {
-      $configuration = $shipping_method_plugin->getConfiguration()['packagers'];
-    }
-
     if (!empty($configuration['enabled'])) {
       foreach ($configuration['enabled'] as $plugin_id) {
         if ($this->shipmentPackagerPluginManager->hasDefinition($plugin_id)) {
@@ -99,7 +93,7 @@ class ChainShipmentPackager implements ChainShipmentPackagerInterface {
   /**
    * {@inheritDoc}
    */
-  public function packageShipment(ShipmentInterface $shipment, ShippingMethodInterface $shipping_method_plugin = NULL) {
+  public function packageShipment(ShipmentInterface $shipment) {
     // Ensure the packagers know what type of shipment packages to create.
     $shipment_type = $this->entityTypeManager->getStorage('commerce_shipment_type')->load($shipment->bundle());
     if (!$shipment_type->getThirdPartySetting('commerce_packaging', 'shipment_package_type')) {
@@ -111,9 +105,6 @@ class ChainShipmentPackager implements ChainShipmentPackagerInterface {
     if (!$shipment->getPackageType()) {
       $default_package_type_id = $this->config->get('default_package_type');
       $default_package_type = $this->packageTypeManager->createInstance($default_package_type_id);
-      if ($shipping_method_plugin) {
-        $default_package_type = $shipping_method_plugin->getDefaultPackageType();
-      }
       if (!$default_package_type) {
         $this->messenger->addWarning($this->t('Packagers could not run because because no default shipment type was provided in the packager settings'));
         return $shipment;
@@ -121,7 +112,7 @@ class ChainShipmentPackager implements ChainShipmentPackagerInterface {
       $shipment->setPackageType($default_package_type);
     }
 
-    $packagers = $this->getEnabledPackagers($shipping_method_plugin);
+    $packagers = $this->getEnabledPackagers();
     if (!empty($packagers)) {
       $shipment->set('packages', []);
       $shipment->setData('unpackaged_items', $shipment->getItems());
@@ -137,14 +128,6 @@ class ChainShipmentPackager implements ChainShipmentPackagerInterface {
     }
 
     return $shipment;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function hasCustomPackaging(ShippingMethodInterface $shipping_method_plugin) {
-    $configuration = $shipping_method_plugin->getConfiguration();
-    return !empty($configuration['packagers']);
   }
 
 }

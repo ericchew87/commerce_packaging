@@ -3,9 +3,6 @@
 namespace Drupal\commerce_packaging_ups;
 
 use Drupal\commerce_packaging\ChainShipmentPackagerInterface;
-use Drupal\commerce_packaging\ShippingMethodPackagingTrait;
-use Drupal\commerce_shipping\Entity\ShipmentInterface;
-use Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterface;
 use Drupal\commerce_ups\UPSShipment as UPSShipmentBase;
 use Ups\Entity\Package as UPSPackage;
 use Ups\Entity\PackageWeight;
@@ -13,7 +10,6 @@ use Ups\Entity\Shipment as APIShipment;
 
 class UPSShipment extends UPSShipmentBase {
 
-  use ShippingMethodPackagingTrait;
 
   /**
    * The current package being processed.
@@ -37,16 +33,6 @@ class UPSShipment extends UPSShipmentBase {
    */
   public function __construct(ChainShipmentPackagerInterface $shipment_packager) {
     $this->shipmentPackager = $shipment_packager;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getShipment(ShipmentInterface $shipment, ShippingMethodInterface $shipping_method) {
-    if ($this->shipmentPackager->hasCustomPackaging($shipping_method)) {
-      $shipment = $this->shipmentPackager->packageShipment($shipment, $shipping_method);
-    }
-    return parent::getShipment($shipment, $shipping_method);
   }
 
   /**
