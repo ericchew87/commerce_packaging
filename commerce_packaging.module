@@ -1,5 +1,6 @@
 <?php
 
+use Drupal\commerce_shipping\Entity\ShipmentInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
@@ -16,9 +17,27 @@ function commerce_packaging_commerce_shipment_delete(EntityInterface $entity) {
 }
 
 /**
+ * Implements hook_ENTITY_TYPE_insert().
+ */
+function commerce_packaging_commerce_shipment_insert(EntityInterface $entity) {
+  _commerce_packaging_shipment_package_ensure_shipment($entity);
+}
+
+/**
  * Implements hook_ENTITY_TYPE_update().
  */
 function commerce_packaging_commerce_shipment_update(EntityInterface $entity) {
+  _commerce_packaging_shipment_package_ensure_shipment($entity);
+}
+
+/**
+ * Ensures shipment packages have a reference to its shipment.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ *   The shipment entity.
+ */
+function _commerce_packaging_shipment_package_ensure_shipment(EntityInterface $entity) {
+  assert($entity instanceof ShipmentInterface);
   if ($entity->hasField('packages') && !$entity->get('packages')->isEmpty()) {
     $packages = $entity->get('packages')->referencedEntities();
     /** @var \Drupal\commerce_packaging\Entity\ShipmentPackageInterface $package */
