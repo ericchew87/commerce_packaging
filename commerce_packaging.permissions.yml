@@ -1,3 +1,7 @@
+administer commerce_packaging_strategy:
+  title: 'Administer payment gateways'
+  'restrict access': TRUE
+
 administer commerce_shipment_package:
   title: 'Administer shipment packages'
   'restrict access': TRUE

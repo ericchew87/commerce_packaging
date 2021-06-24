@@ -12,7 +12,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  *
  * @CommerceInlineForm(
- *   id = "packager_settings",
+ *   id = "commerce_packager_settings",
  *   label = @Translation("Packager Settings"),
  * )
  */
@@ -144,6 +144,12 @@ class PackagerSettings extends InlineFormBase {
     $field_name = $plugin_definition['id'];
     $label = $plugin_definition['label'];
 
+    $enabled = $this->isPackagerEnabled($field_name);
+    $weight = 0;
+    if ($enabled) {
+      $weight = array_search($field_name, $this->configuration['enabled']);
+    }
+
     $regions = array_keys($this->getRegions());
     $field_row = [
       '#attributes' => ['class' => ['draggable', 'tabledrag-leaf']],
@@ -162,7 +168,7 @@ class PackagerSettings extends InlineFormBase {
         '#type' => 'textfield',
         '#title' => $this->t('Weight for @title', ['@title' => $label]),
         '#title_display' => 'invisible',
-        '#default_value' => '0',
+        '#default_value' => $weight,
         '#size' => 3,
         '#attributes' => ['class' => ['field-weight']],
       ],
@@ -187,7 +193,7 @@ class PackagerSettings extends InlineFormBase {
         '#title' => $this->t('Region for @title', ['@title' => $label]),
         '#title_display' => 'invisible',
         '#options' => $this->getRegionOptions(),
-        '#default_value' => $this->isPackagerEnabled($field_name) ? 'content' : 'hidden',
+        '#default_value' => $enabled ? 'content' : 'hidden',
         '#attributes' => ['class' => ['field-region']],
       ],
     ];

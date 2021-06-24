@@ -1,3 +1,28 @@
-commerce_shipping.commerce_shipment_package_type.*:
+commerce_packaging.commerce_shipment_package_type.*:
   type: commerce_config_entity_bundle
   label: 'Shipment package type'
+commerce_packaging.commerce_packaging_strategy.*:
+  type: config_entity
+  label: 'Packaging strategy config'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    default_package_type:
+      type: string
+      label: 'Default package type'
+    packagers:
+      type: map
+      map:
+        enabled:
+          type: sequence
+          label: 'Enabled'
+          sequence: string
+        disabled:
+          type: sequence
+          label: 'Disabled'
+          sequence: string
+

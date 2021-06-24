@@ -102,7 +102,7 @@ class ShipmentPackagerSettings extends ConfigFormBase {
     ];
 
     $packager_configuration = $this->settings->get('packagers') ?: [];
-    $inline_form = $this->inlineFormManager->createInstance('packager_settings', $packager_configuration);
+    $inline_form = $this->inlineFormManager->createInstance('commerce_packager_settings', $packager_configuration);
     $form['packager_settings']['form'] = [
       '#parents' => ['packager_settings'],
       '#inline_form' => $inline_form,
