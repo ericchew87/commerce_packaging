@@ -15,14 +15,7 @@ commerce_packaging.commerce_packaging_strategy.*:
       type: string
       label: 'Default package type'
     packagers:
-      type: map
-      map:
-        enabled:
-          type: sequence
-          label: 'Enabled'
-          sequence: string
-        disabled:
-          type: sequence
-          label: 'Disabled'
-          sequence: string
-
+      type: sequence
+      label: 'Packagers'
+      sequence:
+        type: string

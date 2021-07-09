@@ -58,10 +58,7 @@ class PackagerSettings extends InlineFormBase {
    * {@inheritdoc}
    */
   public function defaultConfiguration() {
-    return [
-      'enabled' => [],
-      'disabled' => [],
-    ];
+    return [];
   }
 
   public function buildInlineForm(array $inline_form, FormStateInterface $form_state) {
@@ -118,10 +115,7 @@ class PackagerSettings extends InlineFormBase {
     $packagers = $this->defaultConfiguration();
     foreach ($values['fields'] as $plugin_id => $packager) {
       if ($packager['region'] !== 'hidden') {
-        $packagers['enabled'][$packager['weight']] = $plugin_id;
-      }
-      else {
-        $packagers['disabled'][$packager['weight']] = $plugin_id;
+        $packagers[$packager['weight']] = $plugin_id;
       }
     }
     $this->setConfiguration($packagers);
@@ -144,10 +138,10 @@ class PackagerSettings extends InlineFormBase {
     $field_name = $plugin_definition['id'];
     $label = $plugin_definition['label'];
 
-    $enabled = $this->isPackagerEnabled($field_name);
+    $enabled = in_array($field_name, $this->configuration);
     $weight = 0;
     if ($enabled) {
-      $weight = array_search($field_name, $this->configuration['enabled']);
+      $weight = array_search($field_name, $this->configuration);
     }
 
     $regions = array_keys($this->getRegions());
@@ -199,18 +193,6 @@ class PackagerSettings extends InlineFormBase {
     ];
 
     return $field_row;
-  }
-
-  /**
-   * Gets whether the given packager plugin_id is enabled.
-   *
-   * @param string $plugin_id
-   *   The packager plugin id.
-   * @return bool
-   *   TRUE if the packager plugin is enabled, FALSE otherwise.
-   */
-  protected function isPackagerEnabled(string $plugin_id) {
-    return in_array($plugin_id, $this->configuration['enabled']);
   }
 
   /**

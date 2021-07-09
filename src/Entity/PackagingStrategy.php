@@ -42,7 +42,7 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *     "id",
  *     "label",
  *     "default_package_type",
- *     "packagers",
+ *     "shipment_packagers",
  *   },
  *   links = {
  *     "add-form" = "/admin/commerce/config/packaging-strategy/add",
@@ -68,7 +68,6 @@ class PackagingStrategy extends ConfigEntityBase implements PackagingStrategyInt
    */
   protected $label;
 
-
   /**
    * The default package type.
    *
@@ -77,10 +76,32 @@ class PackagingStrategy extends ConfigEntityBase implements PackagingStrategyInt
   protected $default_package_type;
 
   /**
-   * The packagers.
+   * The shipment packagers.
    *
    * @var array
    */
-  protected $packagers = [];
+  protected $shipment_packagers = [];
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getDefaultPackageType() {
+    $plugin_manager = \Drupal::service('plugin.manager.commerce_package_type');
+    return $plugin_manager->createInstance($this->default_package_type);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getShipmentPackagers() {
+    $plugin_manager = \Drupal::service('plugin.manager.commerce_shipment_packager');
+    $packagers = [];
+    foreach ($this->shipment_packagers as $packager) {
+      $packager = $plugin_manager->createInstance($packager);
+      $packagers[] = $packager;
+    }
+
+    return $packagers;
+  }
 
 }

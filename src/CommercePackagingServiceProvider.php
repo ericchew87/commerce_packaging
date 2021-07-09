@@ -15,10 +15,10 @@ class CommercePackagingServiceProvider extends ServiceProviderBase {
    * {@inheritdoc}
    */
   public function alter(ContainerBuilder $container) {
-    // Swap the packer manager so that global packaging can be done after packers run.
-    $definition = $container->getDefinition('commerce_shipping.packer_manager');
-    $definition->setClass(PackerManager::class);
-    $definition->addArgument(new Reference('commerce_packaging.chain_shipment_packager'));
+    if ($definition = $container->getDefinition('commerce_shipping.shipment_manager')) {
+      $definition->setClass(ShipmentManager::class);
+      $definition->addArgument(new Reference('commerce_packaging.chain_shipment_packager'));
+    }
   }
 
 }

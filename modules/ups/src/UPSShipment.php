@@ -2,7 +2,6 @@
 
 namespace Drupal\commerce_packaging_ups;
 
-use Drupal\commerce_packaging\ChainShipmentPackagerInterface;
 use Drupal\commerce_ups\UPSShipment as UPSShipmentBase;
 use Ups\Entity\Package as UPSPackage;
 use Ups\Entity\PackageWeight;
@@ -10,49 +9,40 @@ use Ups\Entity\Shipment as APIShipment;
 
 class UPSShipment extends UPSShipmentBase {
 
-
   /**
    * The current package being processed.
    *
-   * @var \Drupal\commerce_packaging\Entity\ShipmentPackageInterface
+   * @var \Drupal\commerce_packaging\ProposedShipmentPackage
    */
   protected $currentPackage;
-
-  /**
-   * The shipment packager.
-   *
-   * @var \Drupal\commerce_packaging\ChainShipmentPackagerInterface
-   */
-  protected $shipmentPackager;
-
-  /**
-   * UPSShipment constructor.
-   *
-   * @param \Drupal\commerce_packaging\ChainShipmentPackagerInterface $shipment_packager
-   *   The shipment packager.
-   */
-  public function __construct(ChainShipmentPackagerInterface $shipment_packager) {
-    $this->shipmentPackager = $shipment_packager;
-  }
 
   /**
    * {@inheritDoc}
    */
   protected function setPackage(APIShipment $api_shipment) {
-    /** @var \Drupal\commerce_packaging\Entity\ShipmentPackageInterface $packages */
-    $packages = $this->shipment->get('packages')->referencedEntities();
-    foreach ($packages as $package) {
-      $this->currentPackage = $package;
-      $api_package = new UPSPackage();
+    $proposed_shipment_packages_data = $this->shipment->getData('proposed_shipment_packages');
 
-      $this->setDimensions($api_package);
-      $this->setWeight($api_package);
-      $this->setPackagingType($api_package);
+    // Workaround to get the shipping method since it is a protected property.
+    $reflection = new \ReflectionProperty($this->shippingMethod, 'parentEntity');
+    $reflection->setAccessible(TRUE);
+    $shipping_method = $reflection->getValue($this->shippingMethod);
 
-      $api_shipment->addPackage($api_package);
+    if (!empty($proposed_shipment_packages_data[$shipping_method->id()])) {
+      $packages = $proposed_shipment_packages_data[$shipping_method->id()];
+      foreach ($packages as $package) {
+        $this->currentPackage = $package;
+        $api_package = new UPSPackage();
+
+        $this->setDimensions($api_package);
+        $this->setWeight($api_package);
+        $this->setPackagingType($api_package);
+
+        $api_shipment->addPackage($api_package);
+      }
+
+      $api_shipment->setNumOfPiecesInShipment((string)count($packages));
     }
 
-    $api_shipment->setNumOfPiecesInShipment((string)count($packages));
   }
 
   /**

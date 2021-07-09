@@ -2,8 +2,8 @@
 
 namespace Drupal\commerce_packaging\Plugin\Commerce\ShipmentPackager;
 
+use Drupal\commerce_packaging\ProposedShipmentPackage;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
-use Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterface;
 
 /**
  * Provides the all_in_one shipment packager.
@@ -19,21 +19,26 @@ class AllInOne extends ShipmentPackagerBase {
   /**
    * {@inheritdoc}
    */
-  public function packageItems(ShipmentInterface $shipment) {
-    /** @var \Drupal\commerce_shipping\ShipmentItem[] $unpackaged_items */
-    $unpackaged_items = $shipment->getData('unpackaged_items');
-    /** @var \Drupal\commerce_packaging\Entity\ShipmentPackageInterface $package */
-    $package = $this->entityTypeManager->getStorage('commerce_shipment_package')->create([
+  public function packageItems(ShipmentInterface $shipment, array $unpackaged_items) {
+    $weight = NULL;
+    $declared_value = NULL;
+    /** @var \Drupal\commerce_shipping\ShipmentItem $unpackaged_item */
+    foreach ($unpackaged_items as $unpackaged_item) {
+      $weight = is_null($weight) ? $unpackaged_item->getWeight() : $weight->add($unpackaged_item->getWeight());
+      $declared_value = is_null($declared_value) ? $unpackaged_item->getDeclaredValue() : $declared_value->add($unpackaged_item->getDeclaredValue());
+    }
+
+    $proposed_shipment_package = new ProposedShipmentPackage([
       'type' => $this->getShipmentPackageType($shipment),
+      'shipment_id' => $shipment->id(),
       'items' => $unpackaged_items,
       'title' => $shipment->getPackageType()->getLabel(),
-      'package_type' => $shipment->getPackageType()->getId(),
-      'declared_value' => $shipment->getTotalDeclaredValue(),
-      'weight' => $shipment->getWeight(),
+      'package_type' => $shipment->getPackageType(),
+      'weight' => $weight,
+      'declared_value' => $declared_value,
     ]);
-    $shipment->get('packages')->appendItem($package);
-    $this->updatePackagedItems($shipment, $unpackaged_items);
-    $shipment->setData('unpackaged_items', []);
+
+    return [[$proposed_shipment_package], []];
   }
 
 }

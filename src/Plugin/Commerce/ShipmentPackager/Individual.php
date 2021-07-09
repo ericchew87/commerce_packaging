@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_packaging\Plugin\Commerce\ShipmentPackager;
 
+use Drupal\commerce_packaging\ProposedShipmentPackage;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
 use Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterface;
 
@@ -19,27 +20,26 @@ class Individual extends ShipmentPackagerBase {
   /**
    * {@inheritdoc}
    */
-  public function packageItems(ShipmentInterface $shipment) {
-    /** @var \Drupal\commerce_shipping\ShipmentItem[] $unpackaged_items */
-    $unpackaged_items = $shipment->getData('unpackaged_items');
-    foreach ($unpackaged_items as $item) {
-      // @todo: ShipmentItem are immutable, need to delete current item and add new one with correct quantity.
-      for ($i = 0; $i < $item->getQuantity(); $i++) {
-        $item = $this->updateItemQuantity($item, 1);
-        $this->updatePackagedItems($shipment, [$item]);
-        /** @var \Drupal\commerce_packaging\Entity\ShipmentPackageInterface $package */
-        $package = $this->entityTypeManager->getStorage('commerce_shipment_package')->create([
+  public function packageItems(ShipmentInterface $shipment, array $unpackaged_items) {
+    $proposed_shipment_packages = [];
+    foreach ($unpackaged_items as $unpackaged_item) {
+      for ($i = 0; $i < $unpackaged_item->getQuantity(); $i++) {
+        $split_unpacked_item = $this->splitShipmentItem($unpackaged_item, 1);
+        $proposed_shipment_package = new ProposedShipmentPackage([
           'type' => $this->getShipmentPackageType($shipment),
-          'items' => [$item],
+          'shipment_id' => $shipment->id(),
+          'items' => [$split_unpacked_item],
           'title' => $shipment->getPackageType()->getLabel() . '-' . $i,
-          'package_type' => $shipment->getPackageType()->getId(),
-          'declared_value' => $item->getDeclaredValue()->divide($item->getQuantity()),
-          'weight' => $item->getWeight()->divide($item->getQuantity()),
+          'package_type' => $shipment->getPackageType(),
+          'weight' => $split_unpacked_item->getWeight(),
+          'declared_value' => $split_unpacked_item->getDeclaredValue(),
         ]);
-        $shipment->get('packages')->appendItem($package);
+
+        $proposed_shipment_packages[] = $proposed_shipment_package;
       }
     }
-    $shipment->setData('unpackaged_items', []);
+
+    return [$proposed_shipment_packages, []];
   }
 
 

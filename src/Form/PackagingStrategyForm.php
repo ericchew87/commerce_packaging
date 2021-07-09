@@ -78,13 +78,13 @@ class PackagingStrategyForm extends EntityForm {
       '#access' => count($package_types) > 1,
     ];
 
-    $packagers = $packaging_strategy->get('packagers');
-    $inline_form = $this->inlineFormManager->createInstance('commerce_packager_settings', $packagers);
-    $form['packagers'] = [
+    $shipment_packagers = $packaging_strategy->get('shipment_packagers');
+    $inline_form = $this->inlineFormManager->createInstance('commerce_packager_settings', $shipment_packagers);
+    $form['shipment_packagers'] = [
       '#parents' => [],
       '#inline_form' => $inline_form,
     ];
-    $form['packagers'] = $inline_form->buildInlineForm($form['packagers'], $form_state);
+    $form['shipment_packagers'] = $inline_form->buildInlineForm($form['shipment_packagers'], $form_state);
 
     return $form;
   }
@@ -94,9 +94,9 @@ class PackagingStrategyForm extends EntityForm {
     $packaging_strategy = $this->entity;
 
     /** @var \Drupal\commerce\Plugin\Commerce\InlineForm\InlineFormInterface $inline_form */
-    $inline_form = $form['packagers']['#inline_form'];
+    $inline_form = $form['shipment_packagers']['#inline_form'];
     $configuration = $inline_form->getConfiguration();
-    $packaging_strategy->set('packagers', $configuration);
+    $packaging_strategy->set('shipment_packagers', $configuration);
   }
 
   /**

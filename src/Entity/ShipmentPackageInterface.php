@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_packaging\Entity;
 
+use Drupal\commerce_packaging\ProposedShipmentPackage;
 use Drupal\commerce_shipping\Plugin\Commerce\PackageType\PackageTypeInterface as PackageTypePluginInterface;
 use Drupal\commerce_price\Price;
 use Drupal\commerce_shipping\ShipmentItem;
@@ -10,6 +11,16 @@ use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\physical\Weight;
 
 interface ShipmentPackageInterface extends ContentEntityInterface, EntityChangedInterface {
+
+  /**
+   * Populates the shipment package from a proposed shipment package.
+   *
+   * @param \Drupal\commerce_packaging\ProposedShipmentPackage $proposed_shipment_package
+   *   The proposed shipment package.
+   *
+   * @return $this
+   */
+  public function populateFromProposedShipmentPackage(ProposedShipmentPackage $proposed_shipment_package);
 
   /**
    * Gets the parent shipment.

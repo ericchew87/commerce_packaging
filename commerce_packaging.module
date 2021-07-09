@@ -62,6 +62,12 @@ function commerce_packaging_entity_operation(EntityInterface $entity) {
   if (!$entity->access('create')) {
     return;
   }
+
+  // Order is required.
+  if (!$entity->getOrder()) {
+    return;
+  }
+
   $operations = [];
   $operations['packages'] = [
     'title' => t('Packages'),

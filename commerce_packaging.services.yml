@@ -2,6 +2,24 @@ services:
   plugin.manager.commerce_shipment_packager:
     class: Drupal\commerce_packaging\ShipmentPackagerPluginManager
     parent: default_plugin_manager
+
   commerce_packaging.chain_shipment_packager:
     class: Drupal\commerce_packaging\ChainShipmentPackager
-    arguments: ['@entity_type.manager', '@messenger', '@config.factory', '@plugin.manager.commerce_shipment_packager', '@plugin.manager.commerce_package_type']
+    arguments: ['@entity_type.manager', '@messenger', '@commerce_packaging.chain_packaging_strategy_resolver']
+
+  commerce_packaging.chain_packaging_strategy_resolver:
+    class: Drupal\commerce_packaging\Resolver\ChainPackagingStrategyResolver
+    tags:
+      - { name: service_collector, call: addResolver, tag: commerce_packaging.packaging_strategy_resolver }
+
+  commerce_packaging.default_packaging_strategy_resolver:
+    class: Drupal\commerce_packaging\Resolver\DefaultPackagingStrategyResolver
+    arguments: ['@entity_type.manager']
+    tags:
+      - { name: commerce_packaging.packaging_strategy_resolver, priority: -100 }
+
+  commerce_packaging.checkout_subscriber:
+    class: Drupal\commerce_packaging\EventSubscriber\CheckoutSubscriber
+    arguments: ['@commerce_packaging.chain_shipment_packager']
+    tags:
+      - { name: event_subscriber }

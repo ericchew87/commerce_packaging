@@ -58,15 +58,7 @@ abstract class ShipmentPackagerBase extends PluginBase implements ContainerFacto
     );
   }
 
-  protected function updatePackagedItems(ShipmentInterface $shipment, array $items) {
-    $packaged_items = $shipment->getData('packaged_items');
-    foreach ($items as $item) {
-      $packaged_items[] = $item;
-    }
-    $shipment->setData('packaged_items', $packaged_items);
-  }
-
-  protected function updateItemQuantity(ShipmentItem $item, $new_quantity) {
+  protected function splitShipmentItem(ShipmentItem $item, $new_quantity) {
     $new_quantity = $new_quantity == 0 ? 1 : $new_quantity;
     $quantity_change = (string)($new_quantity / $item->getQuantity());
 

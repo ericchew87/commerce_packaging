@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_packaging\Entity;
 
+use Drupal\commerce_packaging\ProposedShipmentPackage;
 use Drupal\commerce_price\Price;
 use Drupal\commerce_shipping\Plugin\Commerce\PackageType\PackageTypeInterface as PackageTypePluginInterface;
 use Drupal\commerce_shipping\ShipmentItem;
@@ -17,6 +18,7 @@ use Drupal\physical\Weight;
  * @ContentEntityType(
  *   id = "commerce_shipment_package",
  *   label = @Translation("Shipment Package"),
+ *   label_collection = @Translation("Shipment packages"),
  *   label_singular = @Translation("shipment package"),
  *   label_plural = @Translation("shipment packages"),
  *   label_count = @PluralTranslation(
@@ -64,9 +66,36 @@ class ShipmentPackage extends ContentEntityBase implements ShipmentPackageInterf
    */
   protected function urlRouteParameters($rel) {
     $uri_route_parameters = parent::urlRouteParameters($rel);
-    $uri_route_parameters['commerce_order'] = $this->getShipment()->getOrderId();
-    $uri_route_parameters['commerce_shipment'] = $this->getShipmentId();
+    if ($shipment = $this->getShipment()) {
+      $uri_route_parameters['commerce_order'] = $shipment->getOrderId();
+      $uri_route_parameters['commerce_shipment'] = $shipment->id();
+    }
+
     return $uri_route_parameters;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function populateFromProposedShipmentPackage(ProposedShipmentPackage $proposed_shipment_package) {
+    if ($proposed_shipment_package->getType() != $this->bundle()) {
+      throw new \InvalidArgumentException(sprintf('The proposed shipment package type "%s" does not match the shipment package type "%s".', $proposed_shipment_package->getType(), $this->bundle()));
+    }
+
+    $this->set('shipment_id', $proposed_shipment_package->getShipmentId());
+    $this->set('title', $proposed_shipment_package->getTitle());
+    $this->set('items', $proposed_shipment_package->getItems());
+    $this->set('package_type', $proposed_shipment_package->getPackageType()->getId());
+    foreach ($proposed_shipment_package->getCustomFields() as $field_name => $value) {
+      if ($this->hasField($field_name)) {
+        $this->set($field_name, $value);
+      }
+      else {
+        $this->setData($field_name, $value);
+      }
+    }
+    $this->recalculateWeight();
+    $this->recalculateDeclaredValue();
   }
 
   /**
@@ -242,17 +271,10 @@ class ShipmentPackage extends ContentEntityBase implements ShipmentPackageInterf
     $weight = NULL;
     foreach ($this->getItems() as $shipment_item) {
       $shipment_item_weight = $shipment_item->getWeight();
-      if (!$weight) {
-        $weight = $shipment_item_weight;
-      }
-      else {
-        // @todo ->add() should perform unit conversions automatically.
-        $shipment_item_weight = $shipment_item_weight->convert($weight->getUnit());
-        $weight = $weight->add($shipment_item_weight);
-      }
+      $weight = $weight ? $weight->add($shipment_item_weight) : $shipment_item_weight;
     }
     if ($package_type = $this->getPackageType()) {
-      $package_type_weight = $package_type->getWeight()->convert($weight->getUnit());
+      $package_type_weight = $package_type->getWeight();
       $weight = $weight->add($package_type_weight);
     }
 

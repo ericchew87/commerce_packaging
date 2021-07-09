@@ -8,12 +8,13 @@ use Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterf
 interface ShipmentPackagerInterface {
 
   /**
-   * Create packages for the provided shipment
-   * and shipping method.
+   * Create packages for the provided shipment.
    *
    * @param \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment
    *   The shipment.
+   * @param \Drupal\commerce_shipping\ShipmentItem[]
+   *   The unpackaged shipment items.
    */
-  public function packageItems(ShipmentInterface $shipment);
+  public function packageItems(ShipmentInterface $shipment, array $unpackaged_items);
 
 }
